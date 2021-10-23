@@ -1,0 +1,1 @@
+﻿"%~dp0Forwarder.exe" setup "{home}\.gologin\browser\orbita-browser\chrome.exe" "{exe}" "ParseGoLogin"
