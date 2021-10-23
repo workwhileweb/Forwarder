@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
 using Public;
 
 namespace Forwarder
@@ -8,6 +10,7 @@ namespace Forwarder
     {
         public string Exe { get; set; }
         public bool Wait { get; set; } = false;
+        public string Params { get; set; }
     }
 
     internal class Program
@@ -15,10 +18,15 @@ namespace Forwarder
         private static void Main(string[] args)
         {
             Log.Init();
-            var config = Public.Config.LoadConfig<Config>()??new Config();
 
-            //if (!File.Exists(config.Exe)) 
-            //    throw new FileNotFoundException(config.Exe);
+            var config = Public.Config.LoadConfig<Config>()??new Config();
+            if (config is null) throw new Exception(nameof(config));
+
+            var fileCfgSample = Public.Constant.ExeFile + ".cfg.sample";
+            if (!File.Exists(fileCfgSample)) File.WriteAllText(fileCfgSample, JsonSerializer.Serialize(config));
+
+            if (!File.Exists(config.Exe)) 
+                throw new FileNotFoundException(config.Exe);
 
             //Environment.CommandLine : exe sẽ có bọc quote
             //Constant.ExeFile : không bọc quote
@@ -31,9 +39,9 @@ namespace Forwarder
             // required for EnvironmentVariables to be set
             startInfo.UseShellExecute = false;
             startInfo.FileName = config.Exe;
-            startInfo.Arguments = string.Join(" ", args);
-            var proc= Process.Start(startInfo);
+            startInfo.Arguments = config.Params + " " + string.Join(" ", args);
 
+            var proc= Process.Start(startInfo);
             if (proc == null) throw new Exception(nameof(Process));
 
             if (config.Wait) proc.WaitForExit();
